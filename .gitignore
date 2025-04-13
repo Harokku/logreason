@@ -34,3 +34,11 @@ target/
 
 # Other custom folders
 .junie/
+
+# Secrets and configuration files
+/config/secret.json
+/config/secret.enc.json
+*.key
+*.salt
+.env
+.env.*
