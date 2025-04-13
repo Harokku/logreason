@@ -1,0 +1,36 @@
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE and editor specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Dependency directories
+node_modules/
+vendor/
+
+# Cache or temporary files
+*.log
+*.cache
+*.tmp
+*.swp
+*.lock
+
+# Build and generated files
+dist/
+build/
+out/
+target/
+
+# Go specific
+*.exe
+*.test
+*.out
+*.mod
+*.sum
+
+# Other custom folders
+.junie/
