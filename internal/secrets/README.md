@@ -4,7 +4,8 @@ This package provides a secure way to manage API keys and other sensitive inform
 
 ## Features
 
-- Load secrets from environment variables
+- Load secrets from environment variables (with or without prefix)
+- Load secrets from .env files
 - Load secrets from plain JSON files (for development)
 - Load secrets from encrypted JSON files (for production)
 - Thread-safe access to secrets
@@ -30,8 +31,13 @@ This package implements several security best practices:
 // Create a new secrets manager
 secretsManager := secrets.NewManager()
 
-// Load secrets from environment variables
+// Load secrets from environment variables with a prefix
 secretsManager.LoadFromEnv("API_KEY_")
+
+// Load a single environment variable
+if secretsManager.LoadFromEnvVar("DATABASE_URL") {
+    fmt.Println("Database URL loaded from environment")
+}
 
 // Access a secret
 apiKey, exists := secretsManager.Get("SERVICE1")
@@ -46,6 +52,9 @@ apiKey := secretsManager.GetOrDefault("SERVICE2", "default-key")
 ### Loading from Files
 
 ```go
+// Load from a .env file
+secretsManager.LoadFromDotEnvFile("config/.env")
+
 // Load from a plain JSON file (development only)
 secretsManager.LoadFromFile("config/secrets.json")
 

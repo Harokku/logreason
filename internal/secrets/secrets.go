@@ -3,6 +3,7 @@
 package secrets
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -121,6 +122,73 @@ func (m *Manager) GetAll() map[string]string {
 	}
 
 	return result
+}
+
+// LoadFromEnvVar loads a single environment variable as a secret
+// If the environment variable doesn't exist, it returns false
+func (m *Manager) LoadFromEnvVar(key string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return false
+	}
+
+	m.secrets[key] = value
+	return true
+}
+
+// LoadFromDotEnvFile loads secrets from a .env file
+// The file should contain lines in the format KEY=VALUE
+func (m *Manager) LoadFromDotEnvFile(filePath string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Ensure the file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return fmt.Errorf("env file does not exist: %s", filePath)
+	}
+
+	// Open the file
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to open env file: %w", err)
+	}
+	defer file.Close()
+
+	// Read the file line by line
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+
+		// Skip empty lines and comments
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		// Split the line into key and value
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+
+		// Remove quotes if present
+		if len(value) > 1 && (value[0] == '"' || value[0] == '\'') && value[0] == value[len(value)-1] {
+			value = value[1 : len(value)-1]
+		}
+
+		m.secrets[key] = value
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("error reading env file: %w", err)
+	}
+
+	return nil
 }
 
 // SaveToFile saves the current secrets to a JSON file
