@@ -5,61 +5,63 @@ import (
 	"log"
 	"os"
 
+	"logreason/internal/csvparser"
+	"logreason/internal/geojson"
 	"logreason/internal/secrets"
 )
 
 func main() {
-	// Create a new secrets manager
-	secretsManager := secrets.NewManager()
+	// Create a new parser
+	parser := csvparser.NewParser()
 
-	// Example 1: Load from environment variable
-	// You can set this in your terminal with: export API_ENDPOINT="https://api.example.com/v1"
-	if secretsManager.LoadFromEnvVar("API_ENDPOINT") {
-		fmt.Println("Loaded API_ENDPOINT from environment variable")
-	} else {
-		fmt.Println("API_ENDPOINT not found in environment variables")
+	// Define the path to the input CSV file
+	inputFilePath := "locations/input.csv"
+
+	// Check if the file exists
+	if _, err := os.Stat(inputFilePath); os.IsNotExist(err) {
+		log.Fatalf("Error: Input file %s does not exist", inputFilePath)
 	}
 
-	// Example 2: Load from .env file
-	// Create a sample .env file if it doesn't exist
-	envFilePath := "config/.env"
-	if _, err := os.Stat(envFilePath); os.IsNotExist(err) {
-		envContent := `# Sample .env file
-API_KEY=your-api-key-here
-DATABASE_URL="postgres://user:password@localhost:5432/dbname"
-COMPLEX_URL="https://api.example.com/v2/resource?param1=value1&param2=value2"
-`
-		if err := os.WriteFile(envFilePath, []byte(envContent), 0600); err != nil {
-			log.Fatalf("Failed to create sample .env file: %v", err)
+	// Parse the CSV file
+	fmt.Printf("Parsing CSV file: %s\n", inputFilePath)
+	result := parser.ParseFile(inputFilePath)
+
+	// Check if parsing was successful
+	if !result.Success {
+		log.Printf("Warning: There were %d errors during parsing", len(result.Errors))
+		for _, err := range result.Errors {
+			log.Printf("  %s", err.Error())
 		}
-		fmt.Printf("Created sample .env file at %s\n", envFilePath)
+		if len(result.Locations) == 0 {
+			log.Fatalf("Error: No valid locations found in the CSV file")
+		}
 	}
 
-	// Load secrets from .env file
-	if err := secretsManager.LoadFromDotEnvFile(envFilePath); err != nil {
-		log.Fatalf("Failed to load secrets from .env file: %v", err)
-	}
-	fmt.Println("Loaded secrets from .env file")
+	fmt.Printf("Found %d locations\n", len(result.Locations))
 
-	// Example 3: Load from JSON file
+	// Create a secrets manager and load secrets from file
+	secretsManager := secrets.NewManager()
 	if err := secretsManager.LoadFromFile("config/secret.json"); err != nil {
-		fmt.Printf("Note: Failed to load secrets from JSON file: %v\n", err)
-	} else {
-		fmt.Println("Loaded secrets from JSON file")
+		log.Fatalf("Error loading secrets: %v", err)
 	}
 
-	// Display all loaded secrets
-	fmt.Println("\nLoaded Secrets:")
-	for key, value := range secretsManager.GetAll() {
-		fmt.Printf("%s: %s\n", key, value)
+	// Create a GeoJSON manager
+	geoJSONManager, err := geojson.NewManager(secretsManager)
+	if err != nil {
+		log.Fatalf("Error creating GeoJSON manager: %v", err)
 	}
 
-	// Example of how to use a secret
-	if apiEndpoint, exists := secretsManager.Get("API_ENDPOINT"); exists {
-		fmt.Printf("\nUsing API endpoint: %s\n", apiEndpoint)
+	// Process the locations and save their GeoJSON data
+	fmt.Println("Processing locations and saving GeoJSON data...")
+	errors := geoJSONManager.ProcessLocations(result.Locations)
+
+	// Check if there were any errors during processing
+	if len(errors) > 0 {
+		log.Printf("Warning: There were %d errors during GeoJSON processing", len(errors))
+		for _, err := range errors {
+			log.Printf("  %v", err)
+		}
 	}
 
-	if complexURL, exists := secretsManager.Get("COMPLEX_URL"); exists {
-		fmt.Printf("Using complex URL: %s\n", complexURL)
-	}
+	fmt.Println("Done!")
 }
