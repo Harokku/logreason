@@ -63,10 +63,11 @@ func (m *Manager) SetOutputDir(dir string) error {
 }
 
 // FetchAndSaveGeoJSON fetches GeoJSON data for a location and saves it to a file
-func (m *Manager) FetchAndSaveGeoJSON(location csvparser.Location) error {
-	// Build the URL with the location's coordinates and API key
+func (m *Manager) FetchAndSaveGeoJSON(location csvparser.Location, rangeValue int) error {
+	// Build the URL with the location's coordinates, range, and API key
 	url := strings.ReplaceAll(m.baseURL, "{LAT}", fmt.Sprintf("%f", location.Latitude))
 	url = strings.ReplaceAll(url, "{LON}", fmt.Sprintf("%f", location.Longitude))
+	url = strings.ReplaceAll(url, "{RANGE}", fmt.Sprintf("%d", rangeValue))
 	url = strings.ReplaceAll(url, "{API}", m.apiKey)
 
 	// Fetch the GeoJSON data
@@ -99,11 +100,11 @@ func (m *Manager) FetchAndSaveGeoJSON(location csvparser.Location) error {
 }
 
 // ProcessLocations processes all locations and saves their GeoJSON data
-func (m *Manager) ProcessLocations(locations []csvparser.Location) []error {
+func (m *Manager) ProcessLocations(locations []csvparser.Location, rangeValue int) []error {
 	var errors []error
 
 	for _, location := range locations {
-		if err := m.FetchAndSaveGeoJSON(location); err != nil {
+		if err := m.FetchAndSaveGeoJSON(location, rangeValue); err != nil {
 			errors = append(errors, fmt.Errorf("error processing location %s: %w", location.Name, err))
 		}
 	}

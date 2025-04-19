@@ -11,6 +11,10 @@ import (
 )
 
 func main() {
+	// Default range value for GeoJSON API calls (in seconds)
+	// This should eventually come from an external source
+	const defaultRangeValue = 600
+
 	// Create a new parser
 	parser := csvparser.NewParser()
 
@@ -53,7 +57,7 @@ func main() {
 
 	// Process the locations and save their GeoJSON data
 	fmt.Println("Processing locations and saving GeoJSON data...")
-	errors := geoJSONManager.ProcessLocations(result.Locations)
+	errors := geoJSONManager.ProcessLocations(result.Locations, defaultRangeValue)
 
 	// Check if there were any errors during processing
 	if len(errors) > 0 {
