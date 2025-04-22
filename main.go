@@ -4,6 +4,9 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+
+	"logreason/internal/routes"
 )
 
 func main() {
@@ -12,10 +15,11 @@ func main() {
 		AppName: "LogReason API",
 	})
 
-	// Define a route for the root endpoint
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendStatus(fiber.StatusOK)
-	})
+	// Add logger middleware
+	app.Use(logger.New())
+
+	// Setup routes
+	routes.SetupRoutes(app)
 
 	// Start the server
 	log.Println("Starting server on :3000")
