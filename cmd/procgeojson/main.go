@@ -13,10 +13,10 @@ import (
 
 func main() {
 	// Define command line flags
-	csvFilePath := flag.String("csv", "/locations/input.csv", "Path to the input CSV file")
+	csvFilePath := flag.String("csv", "locations/input.csv", "Path to the input CSV file")
 	rangeValue := flag.Int("range", 600, "Range value for GeoJSON API calls (in seconds)")
-	outputDir := flag.String("output", "/out/geojson", "Directory to save GeoJSON files")
-	secretsFilePath := flag.String("secrets", "/config/secret.json", "Path to the secrets file")
+	outputDir := flag.String("output", "out/geojson", "Directory to save GeoJSON files")
+	secretsFilePath := flag.String("secrets", "config/secret.json", "Path to the secrets file")
 	flag.Parse()
 
 	// Create a new parser
