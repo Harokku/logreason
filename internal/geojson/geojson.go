@@ -4,6 +4,7 @@ package geojson
 import (
 	"fmt"
 	"io"
+	utilities "logreason/internal/utils"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -88,8 +89,9 @@ func (m *Manager) FetchAndSaveGeoJSON(location csvparser.Location, rangeValue in
 	}
 
 	// Create the output file
-	filename := fmt.Sprintf("%s.json", location.Name)
-	filePath := filepath.Join(m.outputDir, filename)
+	//filename := fmt.Sprintf("%s.json", location.Name)
+	//filePath := filepath.Join(m.outputDir, filename)
+	filePath := m.getOutputFileName(&location)
 
 	// Write the GeoJSON data to the file
 	if err := os.WriteFile(filePath, body, 0644); err != nil {
@@ -97,6 +99,19 @@ func (m *Manager) FetchAndSaveGeoJSON(location csvparser.Location, rangeValue in
 	}
 
 	return nil
+}
+
+func (m *Manager) getOutputFileName(location *csvparser.Location) string {
+	// Extract the station code (assuming it's before the parentheses)
+	stationCode := location.Name
+
+	// Convert city name to pascal case
+	cityNamePascal := utilities.ToCamelCase(location.City)
+
+	// Construct filename: STATIONCODE-CityName.json
+	filename := fmt.Sprintf("%s-%s.json", stationCode, cityNamePascal)
+
+	return filepath.Join(m.outputDir, filename)
 }
 
 // ProcessLocations processes all locations and saves their GeoJSON data
